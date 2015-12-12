@@ -1,0 +1,12 @@
+.vagrant
+.unison
+.env
+.DS_Store
+.idea
+*.iml
+*.iws
+tags
+node_modules
+/npm-debug.log*
+
+data/
