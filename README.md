@@ -1,4 +1,4 @@
-# Calypso Live
+# Calypso Live Branches
 
 A proxy server which checkouts a branch of your web application and runs it on demand.
 

@@ -1,21 +1,21 @@
 {
-  "name": "calypso-live",
+  "name": "calypso-live-branches",
   "version": "1.0.0",
-  "description": "A server which checkouts and runs versions (pr, commit, branch) of your application on demand",
+  "description": "A server which checkouts and runs versions (branch) of your application on demand",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Automattic/calypso-live.git"
+    "url": "git+https://github.com/Automattic/calypso-live-branches.git"
   },
   "author": "Automattic",
   "license": "GPL-2.0",
   "bugs": {
-    "url": "https://github.com/Automattic/calypso-live/issues"
+    "url": "https://github.com/Automattic/calypso-live-branches/issues"
   },
-  "homepage": "https://github.com/Automattic/calypso-live#readme",
+  "homepage": "https://github.com/Automattic/calypso-live-branches#readme",
   "dependencies": {
     "cluster-hub": "^0.1.1",
     "cookie-session": "^1.2.0",
