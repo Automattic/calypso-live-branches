@@ -10,8 +10,8 @@ var httpProxy = require('http-proxy');
 var Hub  = require('cluster-hub');
 var hub = new Hub();
 
-module.exports = function( config ) {
-	var socketsDir = path.resolve(config.dir, 'sockets');
+module.exports = function(config) {
+	var socketsDir = path.resolve(config.tmpDir, 'sockets');
 	var pm = require('./process-manager')(config);
 	var workers = {};
 	var proxies = {};
@@ -19,7 +19,7 @@ module.exports = function( config ) {
 	var app = express();
 	app.enable('trust proxy');
 	app.use(cookieSession({
-		name: 'session',
+		name: 'livebranches',
 		keys: ['key1', 'key2']
 	}));
 
@@ -55,7 +55,11 @@ module.exports = function( config ) {
 			req.session.branch = branchName;
 		}
 		if(!workers[branchName] && !proxies[branchName]) {
-			serveBranch(branchName, function() {
+			serveBranch(branchName, function(err) {
+				if(err) {
+					res.send('Error while booting branch: '+err);
+					return;
+				}
 				var socketPath = path.join(socketsDir, branchName+'.socket');
 				console.log('creating proxy to', socketPath);
 				proxies[branchName] = httpProxy.createProxyServer({
@@ -81,5 +85,3 @@ module.exports = function( config ) {
 	//server.on( 'upgrade', proxy.ws.bind( proxy ) );
 	server.listen(3000);
 };
-
-

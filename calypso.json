@@ -1,0 +1,16 @@
+{
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Automattic/wp-calypso.git"
+	},
+	"tmpDir": "../data",
+	"env": {
+		"NODE_ENV": "development",
+		"CALYPSO_ENV": "development",
+		"NODE_PATH": "server:shared:."
+	},
+	"main": "build/bundle-development.js",
+	"scripts": {
+		"build": "make build"
+	}
+}
