@@ -1,3 +1,4 @@
+var fs = require('fs');
 var path = require('path');
 var net = require('net');
 var http = require('http');
@@ -28,10 +29,23 @@ module.exports = function(config) {
 	function serveBranch(branchName, callback) {
 		var worker = cluster.fork('./worker');
 		workers[branchName] = worker;
-		worker.on('online', function(address) {
-			hub.requestWorker(worker, 'init', {
-				branch: branchName
-			}, callback);
+		hub.requestWorker(worker, 'init', {
+			branch: branchName
+		}, callback);
+		worker.on('exit', function(code, signal) {
+			if(!worker.suicide && code !== 0) {
+				console.log("worker "+worker.id+" exited with error.");
+			}
+			workers[branchName] = null;
+			if(proxies[branchName]) {
+				proxies[branchName].close();
+				proxies[branchName] = null;
+			}
+			// ensure unix socket file is removed
+			var socketPath = path.join(socketsDir, branchName+'.socket');
+			try {
+				fs.unlinkSync(socketPath);
+			} catch(e) {}
 		});
 	}
 
@@ -39,7 +53,6 @@ module.exports = function(config) {
 		pm.isUpToDate(branchName, function(err, noChange) {
 			if(err || noChange) return callback(err);
 			worker.kill();
-			workers[branchName] = null;
 			serveBranch(branchName, callback);
 		});
 	}
