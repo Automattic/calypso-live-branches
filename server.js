@@ -16,12 +16,14 @@ module.exports = function(config) {
 	var workers = {};
 	var proxies = {};
 
-	var app = express();
-	app.enable('trust proxy');
-	app.use(cookieSession({
+	var sessionMiddleware = cookieSession({
 		name: 'livebranches',
 		keys: ['key1', 'key2']
-	}));
+	});
+
+	var app = express();
+	app.enable('trust proxy');
+	app.use(sessionMiddleware);
 
 	function serveBranch(branchName, callback) {
 		var worker = cluster.fork('./worker');
@@ -81,7 +83,25 @@ module.exports = function(config) {
 	});
 
 	var server = http.createServer(app);
-	// Proxy WebSockets as well
-	//server.on( 'upgrade', proxy.ws.bind( proxy ) );
+	// Proxy WebSockets as well proxy.ws.bind( proxy )
+	server.on('upgrade', function(req, socket, head) {
+		sessionMiddleware(req, { headers: {} } , function(err) {
+			if(err) {
+				socket.end('Error opening session: '+(err.message || err.toString()));
+				return;
+			}
+			var branchName = req.session.branch || 'master';
+			var proxy = proxies[branchName];
+			if(!branchName || !proxies[branchName]) {
+				socket.end('Session not found');
+				return;
+			}
+			if(!proxy) {
+				socket.end('Proxy not found');
+				return;
+			}
+			proxy.ws(req, socket, head);
+		});
+	});
 	server.listen(3000);
 };
