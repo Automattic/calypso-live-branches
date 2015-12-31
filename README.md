@@ -12,4 +12,4 @@ A demo for [Calypso](https://github.com/Automattic/wp-calypso) is available in t
 - [ ] Display a page while instance is installing.
 - [x] Remove application specific code in `worker.js` (ie `make build` and `require('build/bundle-development.js');`).
 - [ ] Monitor workers: restart failed workers (or mark them as failing for this commit), shutdown unused workers.
-- [ ] Find alternatives to `require` to launch the server with the patch on `net.Server.listen` (needed so we can proxy it).
+- [ ] Find alternatives to `require` to launch the server with the patch on `net.Server.listen` (needed so we can proxy it); have a look at [`node-sandboxed-module`](https://github.com/felixge/node-sandboxed-module) or [`pm2`](https://github.com/Unitech/pm2). 
