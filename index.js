@@ -3,7 +3,6 @@ var path = require('path');
 var fs = require('fs');
 var cluster = require('cluster');
 var mkdirp = require('mkdirp');
-var rmrf = require('rimraf');
 var argument = process.argv.slice(2)[0];
 var config;
 
@@ -23,10 +22,6 @@ if(fs.existsSync(argument)) {
 		tmpDir: './data'
 	};
 }
-
-var socketsDir = path.join(config.tmpDir, 'sockets');
-mkdirp(socketsDir);
-rmrf.sync(socketsDir+'/*');
 
 if(cluster.isMaster) {
 	require('./server')(config);

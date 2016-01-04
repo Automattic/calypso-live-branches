@@ -12,5 +12,6 @@
 	"main": "build/bundle-development.js",
 	"scripts": {
 		"build": "make build"
-	}
+	},
+	"watchDirs": [ "server", "shared" ]
 }

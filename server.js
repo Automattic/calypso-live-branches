@@ -8,12 +8,12 @@ var mkdirp = require('mkdirp');
 var express = require('express');
 var cookieSession = require('cookie-session');
 var httpProxy = require('http-proxy');
+var debug = require('debug')('server');
 var Hub  = require('cluster-hub');
-var hub = new Hub();
 
 module.exports = function(config) {
-	var socketsDir = path.resolve(config.tmpDir, 'sockets');
-	var pm = require('./process-manager')(config);
+	var hub = new Hub();
+	var branchManager = require('./branch-manager')(config);
 	var workers = {};
 	var proxies = {};
 
@@ -26,23 +26,25 @@ module.exports = function(config) {
 	app.enable('trust proxy');
 	app.use(sessionMiddleware);
 
+	function deserializeError(err) {
+		if(!err || typeof err !== 'object') return;
+		err.__proto__ = Error.prototype;
+	}
+
 	function serveBranch(branchName, callback) {
 		var worker = cluster.fork('./worker');
 		workers[branchName] = worker;
 		hub.requestWorker(worker, 'init', {
 			branch: branchName
 		}, callback);
-		worker.on('exit', function(code, signal) {
-			if(!worker.suicide && code !== 0) {
-				console.log("worker "+worker.id+" exited with error.");
-			}
+		worker.on('exit', function() {
 			workers[branchName] = null;
 			if(proxies[branchName]) {
 				proxies[branchName].close();
 				proxies[branchName] = null;
 			}
 			// ensure unix socket file is removed
-			var socketPath = path.join(socketsDir, branchName+'.socket');
+			var socketPath = branchManager.getSocketPath(branchName);
 			try {
 				fs.unlinkSync(socketPath);
 			} catch(e) {}
@@ -50,33 +52,40 @@ module.exports = function(config) {
 	}
 
 	function checkUpdated(branchName, callback) {
-		pm.isUpToDate(branchName, function(err, noChange) {
-			if(err || noChange) return callback(err);
+		hub.requestWorker(workers[branchName], 'update', {
+			branch: branchName
+		}, function(err, mustRestart) {
+			deserializeError(err);
+			if(err || !mustRestart) return callback(err);
 			worker.kill();
-			serveBranch(branchName, callback);
+			worker.once('exit', function() {
+				serveBranch(branchName, callback);
+			});
 		});
 	}
 
 	function proxy(branchName, req, res) {
 		proxies[branchName].web(req, res, function(err) {
-			console.error(err);
+			debug(err);
 		});
 	}
 
 	app.use(function(req, res) {
 		var branchName = req.query.branch || req.session.branch || 'master';
 		if(branchName !== req.session.branch) {
-			console.log('Using branch', branchName);
+			debug('Using branch', branchName);
 			req.session.branch = branchName;
 		}
 		if(!workers[branchName] && !proxies[branchName]) {
 			serveBranch(branchName, function(err) {
+				deserializeError(err);
 				if(err) {
+					debug(err);
 					res.send('Error while booting branch: '+err);
 					return;
 				}
-				var socketPath = path.join(socketsDir, branchName+'.socket');
-				console.log('creating proxy to', socketPath);
+				var socketPath = branchManager.getSocketPath(branchName)
+				debug('creating proxy to', socketPath);
 				proxies[branchName] = httpProxy.createProxyServer({
 					target: {
 						socketPath: socketPath
