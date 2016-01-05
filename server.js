@@ -99,6 +99,19 @@ module.exports = function(config) {
 		});
 	}
 
+	function serveBootPage(req, res, message) {
+		res.send('<head><meta http-equiv="refresh" content="5"></head><body><p>' + message + '</p></body>');
+	}
+
+	function isHTML(req) {
+		var acceptedContentTypes = (req.header('accept') || '').split(";")[0];
+		if(acceptedContentTypes) {
+			acceptedContentTypes = acceptedContentTypes.split(',');
+			if(acceptedContentTypes.indexOf('text/html') >= 0) return true;
+		}
+		return false;
+	}
+
 	app.use(function(req, res, next) {
 		var branchName = req.query.branch || req.session.branch || 'master';
 		if(branchName !== req.session.branch) {
@@ -122,13 +135,20 @@ module.exports = function(config) {
 			});
 		}
 		if(!proxies[branchName]) {
-			res.send('<head><meta http-equiv="refresh" content="5"></head><body><p>Booting branch...</p></body>');
-			return;
+			return serveBootPage(req, res, 'Booting branch...');
 		}
 		checkUpdated(branchName, function(err) {
 			if(err) return next(err);
-			proxy(branchName, req, res);
+			if(!res.headersSent) {
+				proxy(branchName, req, res);
+			}
 		});
+		// add a timer to serve the booting page before the connection times out.
+		setTimeout(function() {
+			if(isHTML(req) && !res.headersSent) {
+				serveBootPage(req, res, 'Compiling assets...');
+			}
+		}, 55*1000);
 	});
 
 	var server = http.createServer(app);
