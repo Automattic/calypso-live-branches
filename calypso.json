@@ -3,7 +3,6 @@
 		"type": "git",
 		"url": "git+https://github.com/Automattic/wp-calypso.git"
 	},
-	"tmpDir": "../data",
 	"env": {
 		"NODE_ENV": "development",
 		"CALYPSO_ENV": "development",

@@ -11,21 +11,30 @@ var debug = require('debug')('worker');
 var hub = new Hub();
 var worker = cluster.worker;
 
-function patchNetServerListen(socketPath, listenListener) {
+function patchNetServerListen(socketPath, onConnected) {
 	var originalNetServerListen = net.Server.prototype.listen;
 	var serverStarted = false;
 	net.Server.prototype.listen = function() {
 		debug('listen() called from worker %d', worker.id);
 		var args = Array.prototype.slice.call( arguments );
-		var newArgs = [ socketPath ];
+		var realCallback;
 		if(args.length > 0 && typeof args[args.length-1] === 'function') {
-			newArgs.push(args[args.length-1]);
+			realCallback = args[args.length-1];
 		}
-		originalNetServerListen.apply(this, newArgs);
-		if(!serverStarted) {
-			serverStarted = true;
-			listenListener && listenListener();
-		}
+		var server = this;
+		worker.on('exit', function() {
+			server.close();
+			server.unref();
+		});
+		originalNetServerListen.call(this, socketPath, function connectListener() {
+			if(realCallback) {
+				realCallback.apply(this, arguments);
+			}
+			if(!serverStarted) {
+				serverStarted = true;
+				onConnected && onConnected();
+			}
+		});
 	};
 }
 
@@ -75,7 +84,6 @@ module.exports = function(config) {
 		var socketPath = branchManager.getSocketPath(branchName);
 		debug('socket path', socketPath);
 
-
 		currentBranch.checkout(function(err, destination) {
 			if(err) return callback(serializeError(err));
 			debug('branch '+branchName+' checkouted in '+destination);
@@ -86,7 +94,7 @@ module.exports = function(config) {
 				// create dir for socket in case branch contains '/'
 				mkdirp(path.dirname(socketPath), function() {
 					// ensure the socket file does not exist yet
-					fs.unlink(socketPath, function() {
+					fs.unlink(socketPath, function(err) {
 						// patch net.Server.listen to use the socket file instead of the port given by the program
 						patchNetServerListen(socketPath, callback);
 
@@ -104,12 +112,16 @@ module.exports = function(config) {
     });
 
 	hub.on('update', function(data, sender, callback) {
-		currentBranch.getLastCommit(function(err, lastCommit) {
+		currentBranch.isUpToDate(function(err, upToDate) {
 			if(err) return callback(serializeError(err));
-			currentBranch.update(function(err) {
+			if(upToDate) return callback(null, false);
+			currentBranch.getLastCommit(function(err, lastCommit) {
 				if(err) return callback(serializeError(err));
-				currentBranch.hasChanged(lastCommit, config.watchDirs, function(err, changed) {
-					callback(serializeError(err), changed);
+				currentBranch.update(function(err) {
+					if(err) return callback(serializeError(err));
+					currentBranch.hasChanged(lastCommit, config.watchDirs, function(err, changed) {
+						callback(serializeError(err), changed);
+					});
 				});
 			});
 		});

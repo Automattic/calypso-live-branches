@@ -4,6 +4,9 @@ var url = require('url');
 var fs = require('fs');
 var cluster = require('cluster');
 var exec = require('child_process').exec;
+var util = require("util");
+var EventEmitter = require("events");
+
 var mkdirp = require('mkdirp');
 var debug = require('debug')('branch-manager');
 
@@ -23,12 +26,15 @@ function createRepository(config, destination) {
 }
 
 function MirrorRepository(url, destination) {
+	EventEmitter.call(this);
 	this.remoteUrl = url.replace('git+https', 'https');
 	this.destination = destination;
 	this.ready = false;
-	this.lastSync = 0;
+	this.initializing = false;
+	this.syncing = false;
 }
 
+util.inherits(MirrorRepository, EventEmitter);
 
 MirrorRepository.prototype.getDirectory = function() {
 	return this.destination;
@@ -37,40 +43,73 @@ MirrorRepository.prototype.getDirectory = function() {
 MirrorRepository.prototype.init = function(callback) {
 	var repo = this;
 	var repoDir = this.getDirectory();
+	repo.ready = false;
+	repo.initializing = true;
 	// check if repo exists
 	fs.stat(repoDir, function(err) {
-		if(!err) return callback();
-		exec('git clone --mirror '+repo.remoteUrl+' '+repoDir, function(err) {
+		if(!err) {
 			repo.ready = true;
-			callback(err);
+			repo.initializing = false;
+			return callback();
+		}
+		mkdirp(repoDir, function() {
+			exec('git clone --mirror '+repo.remoteUrl+' '+repoDir, function(err) {
+				repo.ready = true;
+				repo.initializing = false;
+				repo.emit('ready');
+				callback(err);
+			});
 		});
 	});
 };
 
-MirrorRepository.prototype.refresh = function(callback) {
+/*
+ * To ensure that a git command is only executed once at a time on the mirror repository,
+ * any commands on a MirrorRepository instance must be called from the master process
+ */
+MirrorRepository.prototype.waitAvailable = function(callback) {
 	var repo = this;
-	if(!this.ready) {
-		this.init(function(err) {
-			if(err) return callback(err);
-			repo._sync(callback);
-		});
-		return;
+	repo._checkReady(function() {
+		repo._checkNotSyncing(callback);
+	});
+};
+
+MirrorRepository.prototype._checkReady = function(callback) {
+	if(!this.ready && !this.initializing) {
+		return this.init(callback);
 	}
-	this._sync(callback);
+	if(!this.ready && this.initializing) {
+		return this.once('ready', callback);
+	}
+	callback();
+};
+
+MirrorRepository.prototype._checkNotSyncing = function(callback) {
+	if(this.syncing) {
+		return this.once('synced', callback);
+	}
+	callback();
+};
+
+MirrorRepository.prototype.keepSynced = function() {
+	var repo = this;
+	(function sync() {
+		repo.syncing = true;
+		repo.emit('syncing');
+		repo._sync(function(err) {
+			if(err) console.error(err);
+			repo.syncing = false;
+			repo.emit('synced');
+			setTimeout(sync, 60*1000);
+		});
+	})();
 };
 
 MirrorRepository.prototype._sync = function(callback) {
-	// don't try to sync too often
-	if(Date.now() - this.lastSync < 5*1000) {
-		return callback();
-	}
-	var repo = this;
 	exec('git fetch -p origin', {
 		cwd: this.getDirectory()
-	}, function(err) {
-		if(err) return callback(err);
-		repo.lastSync = Date.now();
-		callback();
+	}, function(err, stdout, stderr) {
+		callback(err);
 	});
 };
 
@@ -84,14 +123,6 @@ function Project(config) {
 
 Project.prototype.getDirectory = function() {
 	return this.destination;
-};
-
-Project.prototype.init = function(callback) {
-	var repo = this.repository;
-	mkdirp(this.destination, function(err) {
-		if(err) return callback(err);
-		repo.init(callback);
-	})
 };
 
 Project.prototype.getBranch = function(branchName) {
@@ -124,23 +155,20 @@ Branch.prototype.checkout = function(callback) {
 	var branchName = this.name;
 	var destinationDir = this.getDirectory();
 	var repo = this.repository;
-	repo.refresh(function(err) {
-		if(err) return callback(err);
-		// check if branch exists in the mirror repository
-		exec('git ls-remote --heads '+repo.getDirectory()+' '+branchName, function(err, stdout) {
-			var branchExist = stdout.toString().length > 0;
-			if(err || !branchExist) {
-				return callback(err || new Error('Branch not found'));
-			}
-			// check if branch exists locally
-			fs.stat(destinationDir, function(err) {
-				if(!err) return branch.update(callback);
-				// ensure `git clone` won't fail if branch contains slashes '/'
-				mkdirp(destinationDir, function(err) {
-					if(err) return callback(err, destinationDir);
-					exec('git clone -b '+branchName+' '+repo.getDirectory()+' '+destinationDir, function(err) {
-						callback(err, destinationDir);
-					});
+	// check if branch exists in the mirror repository
+	exec('git ls-remote --heads '+repo.getDirectory()+' '+branchName, function(err, stdout) {
+		var branchExist = stdout.toString().replace(/\s/gm, '').length > 0;
+		if(err || !branchExist) {
+			return callback(err || new Error('Branch not found'));
+		}
+		// check if branch exists locally
+		fs.stat(destinationDir, function(err) {
+			if(!err) return branch.update(callback);
+			// ensure `git clone` won't fail if branch contains slashes '/'
+			mkdirp(destinationDir, function(err) {
+				if(err) return callback(err, destinationDir);
+				exec('git clone -b '+branchName+' '+repo.getDirectory()+' '+destinationDir, function(err) {
+					callback(err, destinationDir);
 				});
 			});
 		});
@@ -149,25 +177,19 @@ Branch.prototype.checkout = function(callback) {
 
 Branch.prototype.update = function(callback) {
 	var branch = this;
-	this.repository.refresh(function(err) {
-		if (err) return callback(err);
-		exec('git reset --hard origin/'+branch.name, {
-			cwd: branch.getDirectory()
-		}, function(err) {
-			callback(err, branch.getDirectory());
-		});
+	exec('git fetch origin; git reset --hard @{u}', {
+		cwd: branch.getDirectory()
+	}, function(err) {
+		callback(err, branch.getDirectory());
 	});
 };
 
 Branch.prototype.isUpToDate = function(callback) {
 	var branch = this;
-	this.repository.refresh(function(err) {
-		if (err) return callback(err);
-		exec('git log HEAD..@{u} --oneline', {
-			cwd: branch.getDirectory()
-		}, function(err, stdout) {
-			callback(err, stdout.toString().length === 0);
-		});
+	exec('git fetch origin; git log HEAD..@{u} --oneline', {
+		cwd: branch.getDirectory()
+	}, function(err, stdout) {
+		callback(err, stdout.toString().length === 0);
 	});
 };
 
@@ -175,10 +197,9 @@ Branch.prototype.getLastCommit = function(callback) {
 	exec('git rev-parse HEAD', {
 		cwd: this.getDirectory()
 	}, function(err, stdout) {
-		callback(err, stdout.toString());
+		callback(err, stdout.toString().replace(/\s/gm, ''));
 	});
 };
-
 
 Branch.prototype.hasChanged = function(sinceCommit, inDirs, callback) {
 	if(!inDirs || inDirs.length === 0) {
@@ -187,17 +208,16 @@ Branch.prototype.hasChanged = function(sinceCommit, inDirs, callback) {
 	exec('git diff --name-only '+sinceCommit+'..HEAD '+inDirs.join(' '), {
 		cwd: this.getDirectory()
 	}, function(err, stdout) {
-		callback(err, stdout.toString().length === 0);
+		callback(err, stdout.toString().length > 0);
 	});
 };
 
 
 module.exports = function(config) {
-	var project = new Project({
+	return new Project({
 		repository: config.repository,
-		destination: path.resolve(config.tmpDir || '/tmp')
+		destination: path.resolve(process.env.TMP_DIR || '/tmp')
 	});
-	return project;
 };
 
 module.exports.Project = Project;
