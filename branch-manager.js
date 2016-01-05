@@ -14,7 +14,7 @@ var debug = require('debug')('branch-manager');
 function uniqueNameProject(projectPath) {
 	var parsedUrl = url.parse(projectPath);
 	if(parsedUrl.host === 'github.com') {
-		return 'gh-'+path.basename(parsedUrl.pathname, '.git')
+		return 'gh-'+path.basename(parsedUrl.pathname, '.git');
 	}
 	return path.dirname(projectPath);
 }
@@ -27,7 +27,7 @@ function createRepository(config, destination) {
 
 function MirrorRepository(url, destination) {
 	EventEmitter.call(this);
-	this.remoteUrl = url.replace('git+https', 'https');
+	this.remoteUrl = url.replace('git+https', 'git');
 	this.destination = destination;
 	this.ready = false;
 	this.initializing = false;

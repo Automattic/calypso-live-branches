@@ -137,18 +137,20 @@ module.exports = function(config) {
 		if(!proxies[branchName]) {
 			return serveBootPage(req, res, 'Booting branch...');
 		}
+		// try to serve the booting page if the proxied request failed
+		proxies[branchName].on('error', function(err, preq, pres) {
+			debug('proxy error', err);
+			if(!res.headersSent) {
+				if(isHTML(req)) serveBootPage(req, res, 'Compiling assets...');
+				else pres.pipe(res);
+			}
+		});
 		checkUpdated(branchName, function(err) {
 			if(err) return next(err);
 			if(!res.headersSent) {
 				proxy(branchName, req, res);
 			}
 		});
-		// add a timer to serve the booting page before the connection times out.
-		setTimeout(function() {
-			if(isHTML(req) && !res.headersSent) {
-				serveBootPage(req, res, 'Compiling assets...');
-			}
-		}, 55*1000);
 	});
 
 	var server = http.createServer(app);
