@@ -93,16 +93,18 @@ MirrorRepository.prototype._checkNotSyncing = function(callback) {
 
 MirrorRepository.prototype.keepSynced = function() {
 	var repo = this;
-	(function sync() {
-		repo.syncing = true;
-		repo.emit('syncing');
-		repo._sync(function(err) {
-			if(err) console.error(err);
-			repo.syncing = false;
-			repo.emit('synced');
-			setTimeout(sync, 60*1000);
-		});
-	})();
+	this.init(function() {
+		(function sync() {
+			repo.syncing = true;
+			repo.emit('syncing');
+			repo._sync(function(err) {
+				if(err) console.error(err);
+				repo.syncing = false;
+				repo.emit('synced');
+				setTimeout(sync, 60*1000);
+			});
+		})();
+	});
 };
 
 MirrorRepository.prototype._sync = function(callback) {
