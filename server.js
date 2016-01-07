@@ -132,19 +132,20 @@ module.exports = function(config) {
 						socketPath: socketPath
 					}
 				});
+				// try to serve the booting page if the proxied request times out
+				proxies[branchName].on('proxyReq', function (proxyReq, req, res) {
+					proxyReq.setTimeout(50*1000, function onTimeout() {
+						if(isHTML(req) && !res.headersSent) {
+							proxyReq.abort();
+							serveBootPage(req, res, 'Compiling assets...');
+						}
+					});
+				});
 			});
 		}
 		if(!proxies[branchName]) {
 			return serveBootPage(req, res, 'Booting branch...');
 		}
-		// try to serve the booting page if the proxied request failed
-		proxies[branchName].on('error', function(err, preq, pres) {
-			debug('proxy error', err);
-			if(!res.headersSent) {
-				if(isHTML(req)) serveBootPage(req, res, 'Compiling assets...');
-				else pres.pipe(res);
-			}
-		});
 		checkUpdated(branchName, function(err) {
 			if(err) return next(err);
 			if(!res.headersSent) {
