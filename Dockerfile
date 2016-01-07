@@ -30,8 +30,9 @@ COPY    . /calypso-live-branches
 RUN     chown -R nobody /calypso-live-branches
 
 VOLUME [ "/data" ]
+EXPOSE 3000
 
-USER    nobody
+#USER    nobody
 ENV     TMP_DIR /data
 ENV     DEBUG server,worker,branch-manager
 CMD     node index.js calypso.json

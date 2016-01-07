@@ -11,9 +11,10 @@ if(!argument) {
 	return;
 }
 
-if(fs.existsSync(argument)) {
+try {
+	fs.accessSync(argument);
 	config = JSON.parse(fs.readFileSync(argument));
-} else {
+} catch (e) {
 	config = {
 		repository: {
 			type: 'git',

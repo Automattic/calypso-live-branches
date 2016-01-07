@@ -176,4 +176,7 @@ module.exports = function(config) {
 		});
 	});
 	server.listen(3000);
+	server.on('listening', function() {
+		console.log('Server running on port '+3000);
+	});
 };
