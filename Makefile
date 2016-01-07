@@ -2,7 +2,7 @@ whoami=$(shell whoami)
 pwd=$(shell pwd)
 
 run:
-	TMP_DIR=/tmp/data DEBUG=server,worker,branch-manager node index.js calypso.json
+	TMP_DIR=/tmp/data DEBUG=server,worker,branch-manager node lib/index.js calypso.json
 
 docker-build:
 	docker build -t clb .

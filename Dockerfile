@@ -35,4 +35,4 @@ EXPOSE 3000
 #USER    nobody
 ENV     TMP_DIR /data
 ENV     DEBUG server,worker,branch-manager
-CMD     node index.js calypso.json
+CMD     node lib/index.js calypso.json

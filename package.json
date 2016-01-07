@@ -2,7 +2,7 @@
   "name": "calypso-live-branches",
   "version": "1.0.0",
   "description": "A server which checkouts and runs versions (branch) of your application on demand",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "mocha"
   },
