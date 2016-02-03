@@ -6,11 +6,11 @@
 	"env": {
 		"NODE_ENV": "development",
 		"CALYPSO_ENV": "development",
-		"NODE_PATH": "server:shared:."
+		"NODE_PATH": "server:."
 	},
 	"main": "build/bundle-development.js",
 	"scripts": {
 		"build": "make build"
 	},
-	"watchDirs": [ "server", "shared" ]
+	"watchDirs": [ "server" ]
 }
