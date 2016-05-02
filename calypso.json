@@ -10,7 +10,7 @@
 	},
 	"main": "build/bundle-development.js",
 	"scripts": {
-		"build": "make build"
+		"postinstall": "make build"
 	},
 	"watchDirs": [ "server" ]
 }
