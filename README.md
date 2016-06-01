@@ -35,7 +35,8 @@ Run it with `make run`
 - [x] Remove application specific code in `worker.js` (ie `make build` and `require('build/bundle-development.js');`).
 - [x] Monitor workers: restart failed workers (or mark them as failing for this commit), shutdown unused workers.
 - [x] Create a Dockerfile.
-- [ ] Handle erroring branches.
+- [x] Handle erroring branches.
+- [x] Report errors.
 - [ ] Shutdown unused branches after some time.
 - [ ] Add unit tests.
 - [ ] Make a cli and publish it as an npm package.
