@@ -1,0 +1,32 @@
+html
+    head
+        title= message
+        meta(http-equiv="refresh", content="5")
+        style.
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
+                background: #f3f6f8;
+                color: #4f748e;
+                margin: 0;
+            }
+
+            p,
+            .calypsolive-message {
+                height: 21px;
+                overflow: hidden;
+                padding: 16px 9px;
+                margin: 0;
+                background: #2e4453;
+                color: #ffffff;
+            }
+
+            iframe,
+            .calypsolive-log-frame {
+                width: 100%;
+                height: calc( 100% - 57px );
+                border: 0;
+            }
+    body
+        div(class="calypsolive-message")
+            = message
+        iframe(class="calypsolive-log-frame" src= logUrl)
