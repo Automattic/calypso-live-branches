@@ -2,7 +2,7 @@ whoami=$(shell whoami)
 pwd=$(shell pwd)
 
 run:
-	TMP_DIR=./data DEBUG=clb-server,clb-worker,clb-project node lib/index.js calypso.json
+	TMP_DIR=/tmp/data DEBUG=clb-server,clb-worker,clb-project node lib/index.js calypso.json
 
 docker-build:
 	docker build -t clb .
