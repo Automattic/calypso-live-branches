@@ -1,7 +1,6 @@
 html
     head
         title= message
-        meta(http-equiv="refresh", content="50")
         style.
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
@@ -30,11 +29,19 @@ html
         script var config = !{JSON.stringify(config).replace(/<\//g, '<\\/')}
         script.
             $(function() {
+                function isScrolledToBottom() {
+                    return (window.innerHeight + window.scrollY) >= document.body.scrollHeight;
+                }
                 (function refreshLog() {
                     $.get(config.logUrl, function(logContent) {
+                        var atBottom = isScrolledToBottom();
                         $('.calypsolive-log-frame > pre').html(logContent);
+                        if (atBottom) {
+                            $('html, body').animate({ scrollTop: $(document).height() }, 500);
+                        }
+                    }).always(function() {
                         setTimeout(refreshLog, 2000);
-                    });
+                    })
                 })();
                 (function getStatus() {
                     $.get(config.statusUrl, function(statusObj) {
@@ -43,6 +50,8 @@ html
                         } else {
                             setTimeout(getStatus, 2000);
                         }
+                    }).fail(function() {
+                        setTimeout(getStatus, 2000);
                     });
                 })();
             });
