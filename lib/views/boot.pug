@@ -4,8 +4,8 @@ html
         style.
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
-                background: #f3f6f8;
-                color: #4f748e;
+                background: #091e25;
+                color: #ffffff;
                 margin: 0;
             }
 
@@ -47,7 +47,10 @@ html
                     $.get(config.statusUrl, function(statusObj) {
                         if(config.readyEvent && statusObj.status === config.readyEvent
                                 || !config.readyEvent && statusObj.status != 'BOOTING') {
-                            window.location.reload();
+                            // wait 2s before refreshing
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 2000);
                         } else {
                             setTimeout(getStatus, 2000);
                         }
