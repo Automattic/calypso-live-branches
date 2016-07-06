@@ -1,7 +1,7 @@
 html
     head
         title= message
-        meta(http-equiv="refresh", content="5")
+        meta(http-equiv="refresh", content="50")
         style.
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
@@ -26,7 +26,29 @@ html
                 height: calc( 100% - 57px );
                 border: 0;
             }
+        script(src="https://code.jquery.com/jquery-1.12.4.min.js", integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=", crossorigin="anonymous")
+        script var config = !{JSON.stringify(config).replace(/<\//g, '<\\/')}
+        script.
+            $(function() {
+                (function refreshLog() {
+                    $.get(config.logUrl, function(logContent) {
+                        $('.calypsolive-log-frame > pre').html(logContent);
+                        setTimeout(refreshLog, 2000);
+                    });
+                })();
+                (function getStatus() {
+                    $.get(config.statusUrl, function(statusObj) {
+                        if(statusObj.status != 'BOOTING') {
+                            window.location.reload();
+                        } else {
+                            setTimeout(getStatus, 2000);
+                        }
+                    });
+                })();
+            });
     body
         div(class="calypsolive-message")
             = message
-        iframe(class="calypsolive-log-frame" src= logUrl)
+        div(class="calypsolive-log-frame")
+            pre
+
