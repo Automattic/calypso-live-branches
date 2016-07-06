@@ -45,7 +45,8 @@ html
                 })();
                 (function getStatus() {
                     $.get(config.statusUrl, function(statusObj) {
-                        if(statusObj.status != 'BOOTING') {
+                        if(config.readyEvent && statusObj.status === config.readyEvent
+                                || !config.readyEvent && statusObj.status != 'BOOTING') {
                             window.location.reload();
                         } else {
                             setTimeout(getStatus, 2000);
