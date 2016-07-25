@@ -7,7 +7,7 @@
 		"NODE_ENV": "development",
 		"CALYPSO_ENV": "development",
 		"NODE_PATH": "server:client:.",
-		"CALYPSO_LIVE_DEFAULT_CONFIG": "{ \"format\": \"html\" }"
+		"CALYPSO_LIVE_DEFAULT_CONFIG": "{ \"readyEvent\": \"compiler done\", \"format\": \"html\" }"
 	},
 	"main": "build/bundle-development.js",
 	"scripts": {
