@@ -13,6 +13,5 @@
 	"scripts": {
 		"postinstall": "make build",
 		"clean": "make distclean"
-	},
-	"watchPaths": [ "server", "package.json", "webpack.config.js", "webpack.config.node.js", "index.js" ]
+	}
 }
