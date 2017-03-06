@@ -9,7 +9,7 @@
 		"NODE_PATH": "server:client:.",
 		"CALYPSO_LIVE_DEFAULT_CONFIG": "{ \"readyEvent\": \"compiler done\", \"format\": \"html\" }"
 	},
-	"main": "build/bundle-development.js",
+	"main": "build/bundle.js",
 	"scripts": {
 		"postinstall": "make build",
 		"clean": "make distclean"
