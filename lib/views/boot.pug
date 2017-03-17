@@ -11,6 +11,8 @@ html
 
             p,
             .calypsolive-message {
+                position: fixed;
+                width: 100%;
                 box-sizing: border-box;
                 min-height: 55px;
                 max-height: 80px;
@@ -100,7 +102,7 @@ html
     body
         div(class="calypsolive-message")
             = message
-        div(class="calypsolive-toolbar")
-            a(href="https://github.com/Automattic/calypso-live-branches/issues") Report Issues
+            div(class="calypsolive-toolbar")
+                a(href="https://github.com/Automattic/calypso-live-branches/issues") Report Issues
         div(class="calypsolive-log-frame")
             pre
