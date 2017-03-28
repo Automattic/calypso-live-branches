@@ -32,7 +32,7 @@ Run it with `make run`
 ## TODO
 
 - [x] Display a page while instance is installing.
-- [x] Remove application specific code in `worker.js` (ie `make build` and `require('build/bundle-development.js');`).
+- [x] Remove application specific code in `worker.js` (ie `make build` and `require('build/bundle.js');`).
 - [x] Monitor workers: restart failed workers (or mark them as failing for this commit), shutdown unused workers.
 - [x] Create a Dockerfile.
 - [x] Handle erroring branches.
@@ -40,4 +40,4 @@ Run it with `make run`
 - [ ] Shutdown unused branches after some time.
 - [ ] Add unit tests.
 - [ ] Make a cli and publish it as an npm package.
-- [ ] Find alternatives to `require` to launch the server with the patch on `net.Server.listen` (needed so we can proxy it); have a look at [`node-sandboxed-module`](https://github.com/felixge/node-sandboxed-module). 
+- [ ] Find alternatives to `require` to launch the server with the patch on `net.Server.listen` (needed so we can proxy it); have a look at [`node-sandboxed-module`](https://github.com/felixge/node-sandboxed-module).
