@@ -80,7 +80,7 @@ html
                             $('html, body').animate({ scrollTop: $(document).height() }, 500);
                         }
                     }).always(function() {
-                        setTimeout(refreshLog, 2000);
+                        setTimeout(refreshLog, 4000);
                     })
                 })();
                 (function getStatus() {
@@ -90,12 +90,12 @@ html
                             // wait 2s before refreshing
                             setTimeout(function() {
                                 window.location.reload();
-                            }, 2000);
+                            }, 4000);
                         } else {
-                            setTimeout(getStatus, 2000);
+                            setTimeout(getStatus, 4000);
                         }
                     }).fail(function() {
-                        setTimeout(getStatus, 2000);
+                        setTimeout(getStatus, 4000);
                     });
                 })();
             });
