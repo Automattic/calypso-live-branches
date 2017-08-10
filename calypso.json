@@ -11,7 +11,7 @@
 	},
 	"main": "build/bundle.js",
 	"scripts": {
-		"postinstall": "make build",
-		"clean": "make distclean"
+		"postinstall": "npm run build",
+		"clean": "npm run distclean"
 	}
 }
