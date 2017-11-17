@@ -5,7 +5,7 @@ run:
 	TMP_DIR=/tmp/data DEBUG=clb-server,clb-worker,clb-repo node lib/index.js calypso.json
 
 run-prod:
-	TMP_DIR=/home/ubuntu/data DEBUG=clb-server,clb-worker,clb-repo pm2 start --name=calypso ./lib/index.js -- ./calypso.json
+	TMP_DIR=/home/ubuntu/data SOCKET_DIR=/tmp DEBUG=clb-server,clb-worker,clb-repo pm2 start --name=calypso ./lib/index.js -- ./calypso.json
 
 docker-build:
 	docker build -t clb .
