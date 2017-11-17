@@ -28,6 +28,7 @@
     "mkdirp": "^0.5.1",
     "pug": "^0.1.0",
     "shell-escape": "^0.2.0",
-    "ssh-url": "^0.1.5"
+    "ssh-url": "^0.1.5",
+    "terminate": "^2.1.0"
   }
 }

@@ -85,7 +85,11 @@ html
                 })();
                 (function getStatus() {
                     $.get(config.statusUrl, function(statusObj) {
-                        if(config.readyEvent && statusObj.status === config.readyEvent
+                        if(statusObj.status === 'DOWN') {
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        } else if(config.readyEvent && statusObj.status === config.readyEvent
                                 || !config.readyEvent && statusObj.status != 'BOOTING') {
                             // wait 2s before refreshing
                             setTimeout(function() {
