@@ -1,3 +1,7 @@
+# Deprecated
+
+This project has been deprecated and [replaced by DServe](https://github.com/Automattic/dserve). Check that out instead.
+
 # Calypso Live Branches
 
 A proxy server which checkouts a branch of your web application and runs it on demand.
